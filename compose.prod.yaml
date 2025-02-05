@@ -5,4 +5,5 @@ services:
       context: .
       target: frankenphp_prod
     volumes:
+    - ./:/app
       - ./frankenphp/Caddyfile.prod:/etc/caddy/Caddyfile:ro
