@@ -1,0 +1,65 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes réservations{% endblock %}
+
+{% block body %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <h1 class="mb-4">Mes réservations</h1>
+            <div class="mb-4">
+                <a href="{{ path('app_account') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>Retour au compte
+                </a>
+            </div>
+
+            {% if reservations|length > 0 %}
+                <div class="row">
+            {% for reservation in reservations %}
+                    <div class="col-12 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ reservation.villa.title }}</h5>
+                            <p class="card-text">
+                                <strong>Dates :</strong> Du {{ reservation.startDate|date('d/m/Y') }} au {{ reservation.endDate|date('d/m/Y') }}<br>
+                                <strong>Prix total :</strong> {{ reservation.totalPrice|number_format(2, ',', ' ') }} €<br>
+                                <strong>Statut :</strong> 
+                                {% if reservation.status == 'pending' %}
+                                    <span class="badge bg-warning">En attente</span>
+                                {% elseif reservation.status == 'confirmed' %}
+                                    <span class="badge bg-success">Confirmée</span>
+                                    <div class="mt-3">
+                                        <div class="btn-group">
+                                            <a href="{{ path('app_account_reservation_invoice', {id: reservation.id}) }}" class="btn btn-outline-primary btn-sm">
+                                                <i class="bi bi-download me-2"></i>Télécharger la facture
+                                            </a>
+                                            <a href="{{ path('app_account_reservation_invoice_view', {id: reservation.id}) }}" class="btn btn-outline-secondary btn-sm" target="_blank">
+                                                <i class="bi bi-eye me-2"></i>Voir la facture
+                                            </a>
+                                        </div>
+                                    </div>
+                                {% elseif reservation.status == 'canceled' %}
+                                    <span class="badge bg-danger">Annulée</span>
+                                {% endif %}
+                            </p>
+                            {% if reservation.status == 'confirmed' %}
+                                <p class="card-text">
+                                    <strong>Numéro de facture :</strong> {{ reservation.invoiceNumber }}
+                                </p>
+                            {% endif %}
+                            <a href="{{ path('app_villa_show', {id: reservation.villa.id}) }}" class="btn btn-primary">Voir la villa</a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    Vous n'avez pas encore de réservations.
+                    <a href="{{ path('app_villa_index') }}" class="alert-link">Découvrez nos villas</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

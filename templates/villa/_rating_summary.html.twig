@@ -1,0 +1,21 @@
+{% if villa.averageRating %}
+    <span class="rating-summary">
+        <i class="bi bi-star-fill text-warning"></i>
+        <span class="fw-bold">{{ villa.averageRating|number_format(1) }}</span>
+        <small class="text-muted">({{ villa.reviews|length }})</small>
+    </span>
+{% endif %}
+
+<style>
+.rating-summary {
+    font-size: 0.85rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2em;
+}
+.rating-summary .bi-star-fill {
+    font-size: 0.95em;
+}
+</style>

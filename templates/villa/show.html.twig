@@ -1,0 +1,400 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ villa.title }}{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+    .flatpickr-day.disabled {
+        color: #fff !important;
+        background-color: #dc3545 !important;
+        border-color: #dc3545 !important;
+    }
+    .flatpickr-day.disabled:hover {
+        background-color: #bb2d3b !important;
+        border-color: #b02a37 !important;
+    }
+</style>
+<style>
+    .carousel-thumbnails {
+        display: flex;
+        overflow-x: auto;
+        gap: 10px;
+        padding: 10px 0;
+        scrollbar-width: thin;
+    }
+    .carousel-thumbnail-item {
+        flex: 0 0 auto;
+        width: 100px;
+        height: 75px;
+        cursor: pointer;
+        opacity: 0.6;
+        transition: opacity 0.2s;
+        border: 2px solid transparent;
+    }
+    .carousel-thumbnail-item:hover {
+        opacity: 0.8;
+    }
+    .carousel-thumbnail-item.active {
+        opacity: 1;
+        border-color: #0d6efd;
+    }
+    .carousel-thumbnail-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .carousel-control-prev, .carousel-control-next {
+        width: 5%;
+        background: rgba(0, 0, 0, 0.3);
+    }
+    #villaCarousel .carousel-item img {
+        height: 500px;
+        object-fit: cover;
+    }
+</style>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/fr.js"></script>
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const carousel = document.getElementById('villaCarousel');
+        const thumbnails = document.querySelectorAll('.carousel-thumbnail-item');
+        
+        // Mettre à jour la miniature active quand le carousel change
+        carousel.addEventListener('slide.bs.carousel', function(event) {
+            thumbnails.forEach(thumb => thumb.classList.remove('active'));
+            thumbnails[event.to].classList.add('active');
+            
+            // Faire défiler jusqu'à la miniature si nécessaire
+            // thumbnails[event.to].scrollIntoView({
+                // behavior: 'auto',
+                // block: 'nearest',
+                // inline: 'center'
+            // });
+        });
+        
+        // Cliquer sur une miniature change l'image du carousel
+        thumbnails.forEach((thumb, index) => {
+            thumb.addEventListener('click', () => {
+                bootstrap.Carousel.getInstance(carousel).to(index);
+            });
+        });
+    });
+    // Fonction pour charger les dates indisponibles
+    async function loadUnavailableDates() {
+        try {
+            const response = await fetch('{{ path('app_reservation_unavailable_dates', {id: villa.id}) }}');
+            const data = await response.json();
+            return data.dates;
+        } catch (error) {
+            console.error('Erreur lors du chargement des dates indisponibles:', error);
+            return [];
+        }
+    }
+
+    // Initialisation de Flatpickr pour le calendrier
+    let fp;
+    document.addEventListener('DOMContentLoaded', async function() {
+        const unavailableDates = await loadUnavailableDates();
+        console.log('Dates indisponibles:', unavailableDates);
+
+        flatpickr.localize(flatpickr.l10ns.fr);
+        fp = flatpickr('#dates', {
+            mode: 'range',
+            minDate: 'today',
+            locale: 'fr',
+            dateFormat: 'Y-m-d',
+            disable: unavailableDates,
+            onChange: function(selectedDates, dateStr, instance) {
+                if (selectedDates.length === 2) {
+                    const start = selectedDates[0];
+                    const end = selectedDates[1];
+                    const current = new Date(start);
+                    
+                    while (current <= end) {
+                        const dateStr = current.toISOString().split('T')[0];
+                        if (unavailableDates.includes(dateStr)) {
+                            instance.clear();
+                            alert('Ces dates ne sont pas disponibles. Veuillez en choisir d\'autres.');
+                            break;
+                        }
+                        current.setDate(current.getDate() + 1);
+                    }
+                }
+            },
+            enableTime: false,
+            altInput: true,
+            altFormat: 'j F Y',
+            disableMobile: false,
+            allowInput: true,
+            static: true,
+            onChange: function(selectedDates) {
+                if (selectedDates.length === 2) {
+                    checkAvailability(selectedDates[0], selectedDates[1]);
+                } else {
+                    document.getElementById('priceCalculation').classList.add('d-none');
+                    document.getElementById('reserveButton').disabled = true;
+                }
+            }
+        });
+    });
+
+    // Fonction pour vérifier la disponibilité
+    async function checkAvailability(startDate, endDate) {
+        try {
+            const response = await fetch(`{{ path('app_reservation_check_availability', {id: villa.id}) }}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token('check-availability') }}'
+                },
+                body: JSON.stringify({
+                    startDate: startDate.toLocaleDateString('fr-CA'),
+                    endDate: endDate.toLocaleDateString('fr-CA')
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.available) {
+                document.getElementById('priceCalculation').classList.remove('d-none');
+                document.getElementById('nightsCount').textContent = data.nights;
+                document.getElementById('totalPrice').textContent = new Intl.NumberFormat('fr-FR', {
+                    style: 'currency',
+                    currency: 'EUR'
+                }).format(data.totalPrice);
+                document.getElementById('reserveButton').disabled = false;
+            } else {
+                alert('Ces dates ne sont pas disponibles.');
+                fp.clear();
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            alert('Une erreur est survenue lors de la vérification des disponibilités.');
+        }
+    }
+
+    // Initialisation de Stripe
+    const stripe = Stripe('{{ stripe_public_key }}');
+
+    // Gestion du formulaire de réservation
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM chargé');
+        const reservationForm = document.getElementById('reservationForm');
+        console.log('Formulaire trouvé:', reservationForm);
+        if (!reservationForm) return;
+
+        reservationForm.addEventListener('submit', async function(e) {
+            console.log('Formulaire soumis');
+        e.preventDefault();
+
+        const dates = fp.selectedDates;
+        console.log('Dates sélectionnées:', dates);
+        if (dates.length !== 2) {
+            console.log('Pas assez de dates sélectionnées');
+            return;
+        }
+
+        try {
+            console.log('Envoi de la requête de réservation');
+            const response = await fetch(`{{ path('app_reservation_create', {id: villa.id}) }}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token('create-reservation') }}'
+                },
+                body: JSON.stringify({
+                    startDate: dates[0].toLocaleDateString('fr-CA'),
+                    endDate: dates[1].toLocaleDateString('fr-CA')
+                })
+            });
+
+            const data = await response.json();
+            console.log('Réponse reçue:', data);
+
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+
+            // Redirection vers Stripe
+            console.log('Redirection vers Stripe avec sessionId:', data.sessionId);
+            const result = await stripe.redirectToCheckout({
+                sessionId: data.sessionId
+            });
+
+            if (result.error) {
+                alert(result.error.message);
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            alert('Une erreur est survenue lors de la création de la réservation.');
+        }
+        });
+    });
+</script>
+{% endblock %}
+
+{% block body %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ path('app_villa_index') }}">Villas</a></li>
+            <li class="breadcrumb-item active">{{ villa.title }}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <div class="col-md-8">
+            {% if villa.images|length > 0 %}
+                <div class="position-relative">
+                    <div id="villaCarousel" class="carousel slide mb-2" data-bs-ride="carousel" data-bs-touch="true" data-bs-pause="false">
+                        <div class="carousel-inner rounded shadow">
+                            {% for image in villa.images %}
+                                <div class="carousel-item {% if loop.first %}active{% endif %}">
+                                    <img src="{{ asset('uploads/villas/' ~ image.filename) }}" 
+                                         class="d-block w-100" 
+                                         alt="{{ villa.title }} - Photo {{ loop.index }}">
+                                </div>
+                            {% endfor %}
+                        </div>
+                        
+                        {% if villa.images|length > 1 %}
+                            <button class="carousel-control-prev" type="button" data-bs-target="#villaCarousel" data-bs-slide="prev">
+                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Précédent</span>
+                            </button>
+                            <button class="carousel-control-next" type="button" data-bs-target="#villaCarousel" data-bs-slide="next">
+                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Suivant</span>
+                            </button>
+                        {% endif %}
+                    </div>
+                    
+                    {% if villa.images|length > 1 %}
+                        <div class="carousel-thumbnails">
+                            {% for image in villa.images %}
+                                <div class="carousel-thumbnail-item {% if loop.first %}active{% endif %}">
+                                    <img src="{{ asset('uploads/villas/' ~ image.filename) }}" 
+                                         alt="Miniature {{ loop.index }}">
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            {% else %}
+                <div class="bg-light d-flex align-items-center justify-content-center mb-4" style="height: 500px;">
+                    <i class="bi bi-house-door display-1 text-muted"></i>
+                </div>
+            {% endif %}
+
+            <h1 class="mb-4">{{ villa.title }}</h1>
+
+            <div class="mb-4">
+                <h2 class="h4 mb-3">Description</h2>
+                <p class="text-muted">{{ villa.description|nl2br }}</p>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h2 class="h4 mb-3">Caractéristiques</h2>
+                    <div class="row">
+                        <div class="col-sm-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-people me-2"></i>
+                                <span>{{ villa.capacity }} personnes</span>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-door-closed me-2"></i>
+                                <span>{{ villa.bedrooms }} chambres</span>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-droplet me-2"></i>
+                                <span>{{ villa.bathrooms }} salles de bain</span>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-geo-alt me-2"></i>
+                                <span>{{ villa.location }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card sticky-top" style="top: 2rem;">
+                <div class="card-body">
+                    <h3 class="card-title h4 mb-4">{{ villa.price|format_currency('EUR') }} <small class="text-muted">/ nuit</small></h3>
+                    
+                    {% if app.user %}
+                        <form id="reservationForm" class="needs-validation" novalidate>
+                            <div class="mb-3">
+                                <label for="dates" class="form-label">Dates du séjour</label>
+                                <input type="text" id="dates" class="form-control" required>
+                                <div class="invalid-feedback">Veuillez sélectionner vos dates</div>
+                            </div>
+
+                            <div id="priceCalculation" class="mb-3 d-none">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Prix par nuit</span>
+                                    <span>{{ villa.price|format_currency('EUR') }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Nombre de nuits</span>
+                                    <span id="nightsCount">0</span>
+                                </div>
+                                <hr>
+                                <div class="d-flex justify-content-between fw-bold">
+                                    <span>Total</span>
+                                    <span id="totalPrice">0 €</span>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100 mb-3" id="reserveButton" disabled>
+                                <i class="bi bi-calendar-check me-2"></i>Réserver
+                            </button>
+                        </form>
+
+                        <button type="button" class="btn btn-outline-danger w-100 favorite-btn" data-villa-id="{{ villa.id }}">
+                            <i class="bi bi-heart me-2"></i>Ajouter aux favoris
+                        </button>
+                    {% else %}
+                        <div class="alert alert-info mb-0">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <a href="{{ path('app_login') }}" class="alert-link">Connectez-vous</a> pour réserver cette villa
+                        </div>
+                    {% endif %}
+
+                    {% if is_granted('EDIT', villa) %}
+                        <hr>
+                        <div class="d-grid gap-2">
+                            <a href="{{ path('app_villa_edit', {'id': villa.id}) }}" class="btn btn-outline-primary">
+                                <i class="bi bi-pencil me-2"></i>Modifier
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-8">
+            {{ include('villa/_reviews.html.twig') }}
+        </div>
+    </div>
+</div>
+{% endblock %}

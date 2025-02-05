@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Facture - Villa Privée</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            color: #333;
+        }
+        .header {
+            margin-bottom: 40px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #000;
+            margin-bottom: 10px;
+        }
+        .invoice-details {
+            margin-bottom: 30px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #f5f5f5;
+        }
+        .total {
+            margin-top: 20px;
+            text-align: right;
+        }
+        .footer {
+            margin-top: 40px;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">Villa Privée</div>
+        <div>Facture #{{ reservation.id }}</div>
+        <div>Date : {{ date|date('d/m/Y') }}</div>
+    </div>
+
+    <div class="invoice-details">
+        <strong>Client :</strong><br>
+        {{ reservation.user.firstname }} {{ reservation.user.lastname }}<br>
+        {{ reservation.user.email }}
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Description</th>
+                <th>Prix par nuit</th>
+                <th>Nuits</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
+                    {{ reservation.villa.title }}<br>
+                    Du {{ reservation.startDate|date('d/m/Y') }} au {{ reservation.endDate|date('d/m/Y') }}
+                </td>
+                <td>{{ reservation.villa.price|format_currency('EUR') }}</td>
+                <td>{{ reservation.startDate.diff(reservation.endDate).days }}</td>
+                <td>{{ reservation.totalPrice|format_currency('EUR') }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="total">
+        <strong>Total TTC : {{ reservation.totalPrice|format_currency('EUR') }}</strong>
+    </div>
+
+    <div class="footer">
+        <p>Villa Privée - Location de villas de luxe</p>
+        <p>Cette facture a été générée automatiquement.</p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,85 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Administration - {{ villa.id ? 'Modifier' : 'Ajouter' }} une annonce{% endblock %}
+
+{% block body %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h1 class="h4 mb-0">{{ villa.id ? 'Modifier' : 'Ajouter' }} une annonce</h1>
+                </div>
+                <div class="card-body">
+                    {{ form_start(form) }}
+                    <div class="row">
+                        <div class="col-md-6">
+                            {{ form_row(form.title) }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_row(form.price) }}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            {{ form_row(form.description) }}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            {{ form_row(form.bedrooms) }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form_row(form.bathrooms) }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form_row(form.capacity) }}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            {{ form_row(form.location) }}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            {{ form_row(form.isActive) }}
+                        </div>
+                    </div>
+
+                    {% if villa.images|length > 0 %}
+                        <div class="mb-3">
+                            <label class="form-label">Images actuelles</label>
+                            <div class="row">
+                                {% for image in villa.images %}
+                                    <div class="col-md-3 mb-3">
+                                        <img src="{{ asset('uploads/villas/' ~ image.filename) }}" 
+                                             class="img-thumbnail" 
+                                             alt="Image {{ loop.index }}">
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    {{ form_row(form.imageFiles) }}
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{{ path('app_admin_villas') }}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>Retour
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save me-2"></i>{{ villa.id ? 'Mettre à jour' : 'Créer' }}
+                        </button>
+                    </div>
+                    {{ form_end(form) }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

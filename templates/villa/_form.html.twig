@@ -1,0 +1,63 @@
+{{ form_start(form, {'attr': {'class': 'needs-validation'}}) }}
+    <div class="card">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-12">
+                    {{ form_row(form.title, {
+                        'attr': {'class': 'form-control'}
+                    }) }}
+                </div>
+
+                <div class="col-md-12">
+                    {{ form_row(form.description, {
+                        'attr': {'class': 'form-control', 'rows': 5}
+                    }) }}
+                </div>
+
+                <div class="col-md-6">
+                    {{ form_row(form.price, {
+                        'attr': {'class': 'form-control'}
+                    }) }}
+                </div>
+
+                <div class="col-md-6">
+                    {{ form_row(form.location, {
+                        'attr': {'class': 'form-control'}
+                    }) }}
+                </div>
+
+                <div class="col-md-4">
+                    {{ form_row(form.bedrooms, {
+                        'attr': {'class': 'form-control'}
+                    }) }}
+                </div>
+
+                <div class="col-md-4">
+                    {{ form_row(form.bathrooms, {
+                        'attr': {'class': 'form-control'}
+                    }) }}
+                </div>
+
+                <div class="col-md-4">
+                    {{ form_row(form.capacity, {
+                        'attr': {'class': 'form-control'}
+                    }) }}
+                </div>
+
+                <div class="col-md-12">
+                    {{ form_row(form.imageFiles, {
+                        'attr': {'class': 'form-control'}
+                    }) }}
+                    <small class="text-muted">
+                        Formats acceptés : JPEG, PNG. Taille maximale : 2MB. Maximum 5 images.
+                    </small>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer">
+            <button class="btn btn-primary">
+                <i class="bi bi-check-lg me-2"></i>{{ button_label|default('Enregistrer') }}
+            </button>
+        </div>
+    </div>
+{{ form_end(form) }}

@@ -1,0 +1,148 @@
+{% if is_granted('ROLE_USER') %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="h5 mb-0">Donnez votre avis</h3>
+        </div>
+        <div class="card-body">
+            {{ form_start(reviewForm, {'action': path('app_villa_review_new', {'id': villa.id})}) }}
+            <div class="mb-3">
+                {{ form_label(reviewForm.rating) }}
+                <div class="rating-stars" data-rating-input="{{ reviewForm.rating.vars.id }}">
+                    {% for value in 5..1 %}
+                        <input type="radio" id="star{{ value }}" name="star_rating" value="{{ value }}" class="visually-hidden star-input" {% if reviewForm.rating.vars.value == value %}checked{% endif %}>
+                        <label for="star{{ value }}" class="bi bi-star-fill"></label>
+                    {% endfor %}
+                </div>
+                {{ form_widget(reviewForm.rating, { 'attr': {'class': 'visually-hidden rating-field'} }) }}
+                {{ form_errors(reviewForm.rating) }}
+            </div>
+
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const ratingStars = document.querySelector('.rating-stars');
+                    const ratingField = document.getElementById('{{ reviewForm.rating.vars.id }}');
+                    const starInputs = ratingStars.querySelectorAll('.star-input');
+
+                    starInputs.forEach(input => {
+                        input.addEventListener('change', function() {
+                            ratingField.value = this.value;
+                        });
+                    });
+                });
+            </script>
+            {{ form_row(reviewForm.content) }}
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-send me-2"></i>Publier
+            </button>
+            {{ form_end(reviewForm) }}
+        </div>
+    </div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h3 class="h5 mb-0">Avis des clients</h3>
+        {% if villa.averageRating %}
+            <div class="d-flex align-items-center">
+                <div class="stars me-2">
+                    {% set fullStars = villa.averageRating|round(0, 'floor') %}
+                    {% set partialStar = (villa.averageRating - fullStars) %}
+                    {% for i in 1..5 %}
+                        {% if i <= fullStars %}
+                            <i class="bi bi-star-fill text-warning"></i>
+                        {% elseif i == fullStars + 1 and partialStar > 0 %}
+                            <div class="star-container">
+                                <i class="bi bi-star text-warning"></i>
+                                <div class="star-fill" style="width: {{ partialStar * 100 }}%">
+                                    <i class="bi bi-star-fill text-warning"></i>
+                                </div>
+                            </div>
+                        {% else %}
+                            <i class="bi bi-star text-warning"></i>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <span class="fw-bold">{{ villa.averageRating|number_format(1) }}/5</span>
+            </div>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        {% if villa.reviews|length > 0 %}
+            {% for review in villa.reviews %}
+                <div class="review mb-4">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stars mb-2">
+                                {% for i in 1..5 %}
+                                    <i class="bi bi-star{% if i <= review.rating %}-fill{% endif %} text-warning"></i>
+                                {% endfor %}
+                            </div>
+                            <h4 class="h6 mb-1">{{ review.author.email }}</h4>
+                            <small class="text-muted">{{ review.createdAt|date('d/m/Y') }}</small>
+                        </div>
+                        {% if is_granted('ROLE_ADMIN') or app.user == review.author %}
+                            <form method="post" action="{{ path('app_villa_review_delete', {'id': review.id}) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet avis ?');">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ review.id) }}">
+                                <button type="submit" class="btn btn-link text-danger p-0">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        {% endif %}
+                    </div>
+                    <p class="mt-2 mb-0">{{ review.content }}</p>
+                </div>
+                {% if not loop.last %}
+                    <hr>
+                {% endif %}
+            {% endfor %}
+        {% else %}
+            <p class="text-muted mb-0">Aucun avis pour le moment.</p>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.star-container {
+    width: 1em;
+    height: 1em;
+}
+.star-fill {
+    height: 100%;
+}
+.rating-stars {
+    display: inline-flex;
+    flex-direction: row-reverse;
+    gap: 0.25rem;
+}
+.rating-stars label {
+    cursor: pointer;
+    font-size: 1.5rem;
+    color: #dee2e6;
+    transition: color 0.2s;
+}
+.rating-stars label:hover,
+.rating-stars label:hover ~ label,
+.rating-stars input:checked ~ label {
+    color: #ffc107;
+}
+.star-container {
+    width: 1em;
+    height: 1em;
+    position: relative;
+    display: inline-block;
+    line-height: 1;
+}
+.star-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 1em;
+    overflow: hidden;
+}
+.star-fill i {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    line-height: 1;
+}
+</style>

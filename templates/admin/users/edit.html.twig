@@ -1,0 +1,76 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier l'utilisateur{% endblock %}
+
+{% block body %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h1 class="card-title h3 mb-4">Modifier l'utilisateur : {{ user.firstname }} {{ user.lastname }}</h1>
+
+                    {{ form_start(form) }}
+                    <div class="mb-3">
+                        {{ form_label(form.email) }}
+                        {{ form_widget(form.email) }}
+                        <div class="form-text text-danger">
+                            {{ form_errors(form.email) }}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form_label(form.firstname) }}
+                        {{ form_widget(form.firstname) }}
+                        <div class="form-text text-danger">
+                            {{ form_errors(form.firstname) }}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form_label(form.lastname) }}
+                        {{ form_widget(form.lastname) }}
+                        <div class="form-text text-danger">
+                            {{ form_errors(form.lastname) }}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form_label(form.plainPassword, 'Nouveau mot de passe (laisser vide pour ne pas changer)') }}
+                        {{ form_widget(form.plainPassword) }}
+                        <div class="form-text text-danger">
+                            {{ form_errors(form.plainPassword) }}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form_label(form.roles) }}
+                        <div class="mt-2">
+                            {{ form_widget(form.roles) }}
+                        </div>
+                        <div class="form-text text-danger">
+                            {{ form_errors(form.roles) }}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form_label(form.isBanned) }}
+                        <div class="mt-2">
+                            {{ form_widget(form.isBanned) }}
+                        </div>
+                        <div class="form-text text-danger">
+                            {{ form_errors(form.isBanned) }}
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ path('app_admin_users') }}" class="btn btn-secondary">Retour</a>
+                        <button type="submit" class="btn btn-primary">Enregistrer les modifications</button>
+                    </div>
+                    {{ form_end(form) }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

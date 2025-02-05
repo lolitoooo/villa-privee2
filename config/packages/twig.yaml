@@ -1,0 +1,12 @@
+twig:
+    file_name_pattern: '*.twig'
+    default_path: '%kernel.project_dir%/templates'
+    form_themes: ['bootstrap_5_layout.html.twig']
+    paths:
+        '%kernel.project_dir%/public/uploads/villas': villas
+    globals:
+        site_name: 'Villa Privée'
+
+when@test:
+    twig:
+        strict_variables: true

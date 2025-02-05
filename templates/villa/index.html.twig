@@ -1,0 +1,122 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nos Villas{% endblock %}
+
+{% block body %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1>Nos Villas</h1>
+        </div>
+        <div class="col-md-4">
+            <form class="d-flex" method="get">
+                <input type="search" name="q" class="form-control me-2" placeholder="Rechercher une villa..." value="{{ app.request.query.get('q') }}">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <form method="get" class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Filtres</h5>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Prix maximum par nuit</label>
+                        <input type="number" name="max_price" class="form-control" value="{{ app.request.query.get('max_price') }}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Nombre de personnes</label>
+                        <select name="capacity" class="form-select">
+                            <option value="">Tous</option>
+                            {% for i in 1..10 %}
+                                <option value="{{ i }}" {% if app.request.query.get('capacity') == i ~ '' %}selected{% endif %}>{{ i }}+ personnes</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Nombre de chambres minimum</label>
+                        <select name="bedrooms" class="form-select">
+                            <option value="">Tous</option>
+                            {% for i in 1..5 %}
+                                <option value="{{ i }}" {% if app.request.query.get('bedrooms') == i ~ '' %}selected{% endif %}>{{ i }}+ chambres</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-funnel me-2"></i>Filtrer
+                    </button>
+                </div>
+            </form>
+        </div>
+        <div class="col-md-9">
+
+    <div class="row row-cols-1 row-cols-md-2 g-4">
+        {% for villa in villas %}
+            <div class="col">
+                <div class="card h-100">
+                    {% if villa.images|length > 0 %}
+                        <img src="{{ asset('uploads/villas/' ~ villa.images|first.filename) }}" class="card-img-top" alt="{{ villa.title }}" style="height: 200px; object-fit: cover;">
+                    {% else %}
+                        <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                            <i class="bi bi-house-door" style="font-size: 3rem;"></i>
+                        </div>
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title d-flex justify-content-between align-items-center gap-2">
+                            <span class="villa-title text-truncate">{{ villa.title }}</span>
+                            {{ include('villa/_rating_summary.html.twig', {villa: villa}) }}
+                        </h5>
+
+                        <style>
+                        .villa-title {
+                            flex: 1;
+                            min-width: 0;
+                        }
+                        .card-title {
+                            margin-bottom: 1rem;
+                        }
+                        </style>
+                        <p class="card-text text-muted">
+                            <i class="bi bi-geo-alt me-1"></i>{{ villa.location }}
+                        </p>
+                        <p class="card-text">
+                            <small class="text-muted">
+                                <i class="bi bi-people me-1"></i>{{ villa.capacity }} personnes
+                                <span class="mx-2">•</span>
+                                <i class="bi bi-door-closed me-1"></i>{{ villa.bedrooms }} chambres
+                            </small>
+                        </p>
+                        <p class="card-text">
+                            <strong class="text-primary">{{ villa.price|format_currency('EUR') }}</strong> / nuit
+                        </p>
+                        <div class="d-flex gap-2">
+                            <a href="{{ path('app_villa_show', {'id': villa.id}) }}" class="btn btn-primary flex-grow-1">
+                                <i class="bi bi-eye me-1"></i>Voir
+                            </a>
+                            {% if is_granted('ROLE_USER') %}
+                                <button type="button" class="btn btn-outline-danger favorite-btn" data-villa-id="{{ villa.id }}">
+                                    <i class="bi bi-heart"></i>
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="col-12">
+                <div class="alert alert-info">
+                    Aucune villa disponible pour le moment.
+                </div>
+            </div>
+        {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

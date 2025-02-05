@@ -1,0 +1,53 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Administration{% endblock %}
+
+{% block body %}
+<div class="container py-4">
+    <h1 class="mb-4">Administration</h1>
+
+    <div class="row">
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="bi bi-house-door me-2"></i>Gestion des annonces
+                    </h5>
+                    <p class="card-text">Gérez les annonces de villas, leur statut et leurs informations.</p>
+                    <a href="{{ path('app_admin_villas') }}" class="btn btn-primary">
+                        <i class="bi bi-arrow-right me-2"></i>Accéder
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="bi bi-people me-2"></i>Gestion des utilisateurs
+                    </h5>
+                    <p class="card-text">Gérez les comptes utilisateurs, leurs rôles et leurs accès.</p>
+                    <a href="{{ path('app_admin_users') }}" class="btn btn-primary">
+                        <i class="bi bi-arrow-right me-2"></i>Accéder
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="bi bi-calendar me-2"></i>Gestion des réservations
+                    </h5>
+                    <p class="card-text">Gérez les réservations, leur statut et les factures associées.</p>
+                    <a href="{{ path('app_admin_reservations_index') }}" class="btn btn-primary">
+                        <i class="bi bi-arrow-right me-2"></i>Accéder
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

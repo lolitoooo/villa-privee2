@@ -1,0 +1,89 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mon Compte{% endblock %}
+
+{% block body %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <h1 class="mb-4">Mon Compte</h1>
+
+            {% if app.user.isBanned %}
+                <div class="alert alert-danger mb-4">
+                    <h4 class="alert-heading"><i class="bi bi-exclamation-triangle me-2"></i>Compte suspendu</h4>
+                    <p class="mb-0">Votre compte a été suspendu par un administrateur. Vous avez uniquement accès à la page d'accueil et à votre profil.</p>
+                    <hr>
+                    <p class="mb-0">Pour plus d'informations ou pour contester cette décision, veuillez nous contacter.</p>
+                </div>
+            {% endif %}
+
+            {% for message in app.flashes('success') %}
+                <div class="alert alert-success">
+                    {{ message }}
+                </div>
+            {% endfor %}
+
+            {% for message in app.flashes('error') %}
+                <div class="alert alert-danger">
+                    {{ message }}
+                </div>
+            {% endfor %}
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Informations personnelles</h5>
+                    <dl class="row">
+                        <dt class="col-sm-3">Prénom</dt>
+                        <dd class="col-sm-9">{{ user.firstname }}</dd>
+
+                        <dt class="col-sm-3">Nom</dt>
+                        <dd class="col-sm-9">{{ user.lastname }}</dd>
+
+                        <dt class="col-sm-3">Email</dt>
+                        <dd class="col-sm-9">{{ user.email }}</dd>
+
+                        <dt class="col-sm-3">Statut</dt>
+                        <dd class="col-sm-9">
+                            {% if user.isBanned %}
+                                <span class="badge bg-danger">Compte suspendu</span>
+                            {% else %}
+                                <span class="badge bg-success">Compte actif</span>
+                            {% endif %}
+                        </dd>
+                    </dl>
+                    <div class="mt-3">
+                        <a href="{{ path('app_account_edit') }}" class="btn btn-primary">Modifier mes informations</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Mes réservations</h5>
+                    <p class="card-text">Consultez l'historique de vos réservations de villas.</p>
+                    <a href="{{ path('app_account_reservations') }}" class="btn btn-primary">Voir mes réservations</a>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Sécurité</h5>
+                    <p class="card-text">Gérez votre mot de passe et la sécurité de votre compte.</p>
+                    <a href="{{ path('app_account_change_password') }}" class="btn btn-secondary">Changer mon mot de passe</a>
+                </div>
+            </div>
+
+            <div class="card border-danger">
+                <div class="card-body">
+                    <h5 class="card-title text-danger">Zone dangereuse</h5>
+                    <p class="card-text">La suppression de votre compte est irréversible.</p>
+                    <form method="post" action="{{ path('app_account_delete') }}" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer votre compte ?');">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete-account') }}">
+                        <button type="submit" class="btn btn-danger">Supprimer mon compte</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

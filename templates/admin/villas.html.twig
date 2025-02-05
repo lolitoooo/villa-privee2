@@ -1,0 +1,166 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Administration - Gestion des annonces{% endblock %}
+
+{% block body %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Gestion des annonces</h1>
+        <a href="{{ path('app_admin_villas_new') }}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-2"></i>Ajouter une annonce
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Image</th>
+                            <th>Titre</th>
+                            <th>Propriétaire</th>
+                            <th>Prix</th>
+                            <th>Statut</th>
+                            <th>Créée le</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for villa in villas %}
+                            <tr>
+                                <td>{{ villa.id }}</td>
+                                <td>
+                                    {% if villa.images|length > 0 %}
+                                        <img src="{{ asset('uploads/villas/' ~ villa.images[0].filename) }}" 
+                                             alt="{{ villa.title }}"
+                                             style="width: 50px; height: 50px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="bg-light d-flex align-items-center justify-content-center" 
+                                             style="width: 50px; height: 50px;">
+                                            <i class="bi bi-house-door text-muted"></i>
+                                        </div>
+                                    {% endif %}
+                                </td>
+                                <td>{{ villa.title }}</td>
+                                <td>
+                                    {% if villa.owner %}
+                                        {{ villa.owner.firstname }} {{ villa.owner.lastname }}
+                                    {% else %}
+                                        <span class="text-muted">Non assigné</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ villa.price|format_currency('EUR') }}</td>
+                                <td>
+                                    {% if villa.isIsActive %}
+                                        <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Actif</span>
+                                    {% else %}
+                                        <span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>Inactif</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ villa.createdAt|date('d/m/Y H:i') }}</td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a href="{{ path('app_admin_villas_edit', {'id': villa.id}) }}" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <button type="button" 
+                                                class="btn btn-sm status-toggle {% if villa.isIsActive %}btn-outline-success{% else %}btn-outline-danger{% endif %}"
+                                                data-villa-id="{{ villa.id }}"
+                                                data-csrf-token="{{ csrf_token('toggle-status' ~ villa.id) }}">
+                                            <i class="bi {% if villa.isIsActive %}bi-pause-circle{% else %}bi-play-circle{% endif %}"></i>
+                                        </button>
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-danger rounded-end"
+                                                onclick="if(confirm('Êtes-vous sûr de vouloir supprimer cette annonce ?')) { 
+                                                    document.getElementById('delete-form-{{ villa.id }}').submit(); 
+                                                }">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                        <form id="delete-form-{{ villa.id }}" 
+                                              action="{{ path('app_admin_villas_delete', {'id': villa.id}) }}" 
+                                              method="post" 
+                                              style="display: none;">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ villa.id) }}">
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if totalPages > 1 %}
+                <nav class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if currentPage > 1 %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ path('app_admin_villas', {'page': currentPage - 1}) }}">
+                                    <i class="bi bi-chevron-left"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+
+                        {% for i in 1..totalPages %}
+                            <li class="page-item {% if i == currentPage %}active{% endif %}">
+                                <a class="page-link" href="{{ path('app_admin_villas', {'page': i}) }}">{{ i }}</a>
+                            </li>
+                        {% endfor %}
+
+                        {% if currentPage < totalPages %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ path('app_admin_villas', {'page': currentPage + 1}) }}">
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.status-toggle').forEach(function(button) {
+        button.addEventListener('click', function() {
+            const villaId = this.dataset.villaId;
+            const csrfToken = this.dataset.csrfToken;
+            
+            fetch(`/admin/villas/${villaId}/toggle-status`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `_token=${csrfToken}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (data.isActive) {
+                        button.classList.remove('btn-danger');
+                        button.classList.add('btn-success');
+                        button.innerHTML = '<i class="bi bi-check-circle me-1"></i>Actif';
+                    } else {
+                        button.classList.remove('btn-success');
+                        button.classList.add('btn-danger');
+                        button.innerHTML = '<i class="bi bi-x-circle me-1"></i>Inactif';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                alert('Une erreur est survenue lors du changement de statut.');
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

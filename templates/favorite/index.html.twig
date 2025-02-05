@@ -1,0 +1,72 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes Favoris{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<style>
+    .col {
+        transition: opacity 0.3s ease-out;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container py-4">
+    <h1 class="mb-4">Mes Favoris</h1>
+
+    {% if favorites|length > 0 %}
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            {% for favorite in favorites %}
+                {% set villa = favorite.villa %}
+                <div class="col">
+                    <div class="card h-100">
+                        {% if villa.images|length > 0 %}
+                            <img src="{{ asset('uploads/villas/' ~ villa.images[0].filename) }}" 
+                                 class="card-img-top"
+                                 alt="{{ villa.title }}"
+                                 style="height: 200px; object-fit: cover;">
+                        {% else %}
+                            <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                <i class="bi bi-house-door display-4 text-muted"></i>
+                            </div>
+                        {% endif %}
+
+                        <div class="card-body">
+                            <h5 class="card-title">{{ villa.title }}</h5>
+                            <p class="card-text text-muted">{{ villa.location }}</p>
+                            <p class="card-text">
+                                <strong>{{ villa.price|format_currency('EUR') }}</strong> <small class="text-muted">/ nuit</small>
+                            </p>
+                        </div>
+
+                        <div class="card-footer bg-transparent border-top-0">
+                            <div class="d-flex gap-2">
+                                <a href="{{ path('app_villa_show', {'id': villa.id}) }}" class="btn btn-primary flex-grow-1">
+                                    <i class="bi bi-eye me-1"></i>Voir
+                                </a>
+                                <button type="button" 
+                                        class="btn btn-danger favorite-btn" 
+                                        data-villa-id="{{ villa.id }}">
+                                    <i class="bi bi-heart-fill"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-heart display-1 text-muted mb-3"></i>
+            <h2 class="h4 text-muted">Vous n'avez pas encore de favoris</h2>
+            <p class="text-muted mb-4">Parcourez nos villas et ajoutez celles qui vous plaisent à vos favoris</p>
+            <a href="{{ path('app_villa_index') }}" class="btn btn-primary">
+                <i class="bi bi-houses me-2"></i>Voir toutes les villas
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+

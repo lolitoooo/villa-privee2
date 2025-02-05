@@ -1,0 +1,70 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Hello HomeController!{% endblock %}
+
+{% block body %}
+<div class="px-4 py-5 my-5 text-center">
+    <h1 class="display-5 fw-bold text-body-emphasis">Bienvenue sur Villa Privée</h1>
+    <div class="col-lg-6 mx-auto">
+        <p class="lead mb-4">
+            Découvrez notre sélection exclusive de villas de luxe pour des séjours inoubliables.
+        </p>
+        {% if not app.user %}
+            <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+                <a href="{{ path('app_register') }}" class="btn btn-primary btn-lg px-4 gap-3">S'inscrire</a>
+                <a href="{{ path('app_login') }}" class="btn btn-outline-secondary btn-lg px-4">Se connecter</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if app.user %}
+    {% if app.user.isBanned %}
+        <div class="alert alert-danger text-center mb-4">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            Votre compte a été suspendu. Vous avez uniquement accès à la page d'accueil et à votre profil.
+            Pour plus d'informations, veuillez nous contacter.
+        </div>
+    {% endif %}
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Mes Réservations</h5>
+                    <p class="card-text">Consultez et gérez vos réservations actuelles.</p>
+                    <a href="#" class="btn btn-primary{% if app.user.isBanned %} disabled{% endif %}">
+                        {% if app.user.isBanned %}
+                            <i class="bi bi-lock me-2"></i>
+                        {% endif %}
+                        Voir mes réservations
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Rechercher une Villa</h5>
+                    <p class="card-text">Trouvez la villa parfaite pour votre prochain séjour.</p>
+                    <a href="#" class="btn btn-primary{% if app.user.isBanned %} disabled{% endif %}">
+                        {% if app.user.isBanned %}
+                            <i class="bi bi-lock me-2"></i>
+                        {% endif %}
+                        Rechercher
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Mon Profil</h5>
+                    <p class="card-text">Gérez vos informations personnelles.</p>
+                    <a href="{{ path('app_account') }}" class="btn btn-primary">Modifier mon profil</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

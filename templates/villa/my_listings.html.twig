@@ -1,0 +1,98 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes Villas{% endblock %}
+
+{% block body %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Mes Villas</h1>
+        <a href="{{ path('app_villa_new') }}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-2"></i>Ajouter une villa
+        </a>
+    </div>
+
+    {% if villas is empty %}
+        <div class="text-center py-5">
+            <div class="display-1 text-muted mb-4">
+                <i class="bi bi-houses"></i>
+            </div>
+            <h2 class="h4 text-muted mb-4">Vous n'avez pas encore d'annonces</h2>
+            <p class="text-muted mb-4">
+                Commencez à louer votre villa dès maintenant et profitez d'une visibilité maximale
+                auprès de nos utilisateurs.
+            </p>
+            <a href="{{ path('app_villa_new') }}" class="btn btn-primary btn-lg">
+                <i class="bi bi-plus-lg me-2"></i>Publier ma première annonce
+            </a>
+        </div>
+    {% else %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Photo</th>
+                        <th>Titre</th>
+                        <th>Localisation</th>
+                        <th>Prix / nuit</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for villa in villas %}
+                        <tr>
+                            <td style="width: 100px;">
+                                {% if villa.images|length > 0 %}
+                                    <img src="{{ asset('uploads/villas/' ~ villa.images|first.filename) }}" 
+                                         class="img-thumbnail" 
+                                         alt="{{ villa.title }}"
+                                         style="width: 100px; height: 75px; object-fit: cover;">
+                                {% else %}
+                                    <div class="bg-light d-flex align-items-center justify-content-center" 
+                                         style="width: 100px; height: 75px;">
+                                        <i class="bi bi-house-door"></i>
+                                    </div>
+                                {% endif %}
+                            </td>
+                            <td>{{ villa.title }}</td>
+                            <td>{{ villa.location }}</td>
+                            <td>{{ villa.price|format_currency('EUR') }}</td>
+                            <td>
+                                {% if villa.isActive %}
+                                    <span class="badge bg-success">Active</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Désactivée</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{{ path('app_villa_show', {'id': villa.id}) }}" 
+                                       class="btn btn-sm btn-outline-secondary"
+                                       title="Voir">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{{ path('app_villa_edit', {'id': villa.id}) }}" 
+                                       class="btn btn-sm btn-outline-primary"
+                                       title="Modifier">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form action="{{ path('app_villa_toggle', {'id': villa.id}) }}" 
+                                          method="post" 
+                                          style="display: inline-block;">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('toggle' ~ villa.id) }}">
+                                        <button type="submit" 
+                                                class="btn btn-sm btn-outline-{{ villa.isActive ? 'warning' : 'success' }}"
+                                                title="{{ villa.isActive ? 'Désactiver' : 'Activer' }}">
+                                            <i class="bi bi-{{ villa.isActive ? 'pause' : 'play' }}"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
