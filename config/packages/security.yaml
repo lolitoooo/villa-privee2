@@ -42,6 +42,7 @@ security:
     access_control:
         - { path: ^/admin, roles: ROLE_ADMIN }
         - { path: ^/account, roles: ROLE_USER }
+        - { path: ^/villas, roles: ROLE_USER }
         - { path: ^/villas/mes-villas, roles: ROLE_OWNER }
         - { path: ^/villas/nouvelle, roles: ROLE_OWNER }
         - { path: ^/villas/\d+/modifier, roles: ROLE_OWNER }

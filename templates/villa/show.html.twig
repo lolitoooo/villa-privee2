@@ -378,7 +378,7 @@
                         </div>
                     {% endif %}
 
-                    {% if is_granted('EDIT', villa) %}
+                    {% if is_granted('VILLA_EDIT', villa) %}
                         <hr>
                         <div class="d-grid gap-2">
                             <a href="{{ path('app_villa_edit', {'id': villa.id}) }}" class="btn btn-outline-primary">

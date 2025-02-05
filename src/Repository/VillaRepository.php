@@ -62,7 +62,7 @@ class VillaRepository extends ServiceEntityRepository
     /**
      * @return Villa[] Returns an array of Villa objects filtered by search criteria
      */
-    public function findByFilters(array $filters): array
+    public function findByFilters(array $filters, int $page = 1): array
     {
         $qb = $this->createQueryBuilder('v')
             ->andWhere('v.isActive = :active')
@@ -88,8 +88,28 @@ class VillaRepository extends ServiceEntityRepository
                ->setParameter('bedrooms', $filters['bedrooms']);
         }
 
-        return $qb->orderBy('v.createdAt', 'DESC')
-                  ->getQuery()
-                  ->getResult();
+        $itemsPerPage = 4;
+        $firstResult = ($page - 1) * $itemsPerPage;
+
+        $totalItems = (int) $this->createQueryBuilder('v')
+            ->select('COUNT(v.id)')
+            ->andWhere('v.isActive = :active')
+            ->setParameter('active', true)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        $villas = $qb->orderBy('v.createdAt', 'DESC')
+            ->setMaxResults($itemsPerPage)
+            ->setFirstResult($firstResult)
+            ->getQuery()
+            ->getResult();
+
+        return [
+            'villas' => $villas,
+            'totalItems' => $totalItems,
+            'itemsPerPage' => $itemsPerPage,
+            'currentPage' => $page,
+            'totalPages' => ceil($totalItems / $itemsPerPage)
+        ];
     }
 }

@@ -24,6 +24,7 @@ class VillaController extends AbstractController
     #[Route('/', name: 'app_villa_index', methods: ['GET'])]
     public function index(Request $request, VillaRepository $villaRepository): Response
     {
+        $page = max(1, $request->query->getInt('page', 1));
         $filters = [
             'q' => $request->query->get('q'),
             'max_price' => $request->query->get('max_price'),
@@ -31,8 +32,14 @@ class VillaController extends AbstractController
             'bedrooms' => $request->query->get('bedrooms'),
         ];
 
+        $result = $villaRepository->findByFilters($filters, $page);
+
         return $this->render('villa/index.html.twig', [
-            'villas' => $villaRepository->findByFilters($filters),
+            'villas' => $result['villas'],
+            'currentPage' => $result['currentPage'],
+            'totalPages' => $result['totalPages'],
+            'totalItems' => $result['totalItems'],
+            'filters' => $filters,
         ]);
     }
 
@@ -55,6 +62,7 @@ class VillaController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $villa->setOwner($this->getUser());
+            $villa->setSlug($slugger->slug($villa->getTitle())->lower());
             
             // Gérer les images
             $images = $form->get('imageFiles')->getData();
@@ -94,10 +102,7 @@ class VillaController extends AbstractController
     #[Route('/{id}', name: 'app_villa_show', methods: ['GET'])]
     public function show(Villa $villa, ParameterBagInterface $params): Response
     {
-        // Ne pas afficher les villas désactivées sauf pour le propriétaire
-        if (!$villa->isIsActive() && $this->getUser() !== $villa->getOwner()) {
-            throw $this->createNotFoundException('Cette villa n\'est pas disponible.');
-        }
+        $this->denyAccessUnlessGranted('VILLA_VIEW', $villa);
 
         $review = new VillaReview();
         $reviewForm = $this->createForm(VillaReviewType::class, $review);
@@ -112,10 +117,7 @@ class VillaController extends AbstractController
     #[Route('/{id}/modifier', name: 'app_villa_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, Villa $villa, EntityManagerInterface $entityManager, SluggerInterface $slugger): Response
     {
-        // Vérifier que l'utilisateur est le propriétaire
-        if ($this->getUser() !== $villa->getOwner()) {
-            throw $this->createAccessDeniedException('Vous n\'êtes pas autorisé à modifier cette villa.');
-        }
+        $this->denyAccessUnlessGranted('VILLA_EDIT', $villa);
 
         $form = $this->createForm(VillaType::class, $villa);
         $form->handleRequest($request);
@@ -159,9 +161,7 @@ class VillaController extends AbstractController
     #[Route('/{id}/toggle', name: 'app_villa_toggle', methods: ['POST'])]
     public function toggle(Request $request, Villa $villa, EntityManagerInterface $entityManager): Response
     {
-        if ($this->getUser() !== $villa->getOwner()) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->denyAccessUnlessGranted('VILLA_EDIT', $villa);
 
         if ($this->isCsrfTokenValid('toggle'.$villa->getId(), $request->request->get('_token'))) {
             $villa->setIsActive(!$villa->isIsActive());
@@ -174,9 +174,7 @@ class VillaController extends AbstractController
     #[Route('/{id}/supprimer-image/{imageId}', name: 'app_villa_delete_image', methods: ['POST'])]
     public function deleteImage(Request $request, Villa $villa, int $imageId, EntityManagerInterface $entityManager): Response
     {
-        if ($this->getUser() !== $villa->getOwner()) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->denyAccessUnlessGranted('VILLA_EDIT', $villa);
 
         if ($this->isCsrfTokenValid('delete-image'.$imageId, $request->request->get('_token'))) {
             $image = $entityManager->getRepository(VillaImage::class)->find($imageId);
@@ -194,5 +192,49 @@ class VillaController extends AbstractController
         }
 
         return $this->redirectToRoute('app_villa_edit', ['id' => $villa->getId()], Response::HTTP_SEE_OTHER);
+    }
+
+    #[Route('/{id}', name: 'app_villa_delete', methods: ['POST'])]
+    #[IsGranted('ROLE_OWNER')]
+    public function delete(Request $request, Villa $villa, EntityManagerInterface $entityManager): Response
+    {
+        if ($this->isCsrfTokenValid('delete'.$villa->getId(), $request->request->get('_token'))) {
+            // Vérifier que l'utilisateur est bien le propriétaire
+            if ($villa->getOwner() !== $this->getUser()) {
+                throw $this->createAccessDeniedException('Vous n\'êtes pas autorisé à supprimer cette villa.');
+            }
+            
+            $entityManager->remove($villa);
+            $entityManager->flush();
+            
+            $this->addFlash('success', 'La villa a été supprimée avec succès.');
+        }
+
+        return $this->redirectToRoute('app_villa_my_listings', [], Response::HTTP_SEE_OTHER);
+    }
+
+    #[Route('/{id}/avis', name: 'app_villa_add_review', methods: ['POST'])]
+    public function addReview(Request $request, Villa $villa, EntityManagerInterface $entityManager): Response
+    {
+        $this->denyAccessUnlessGranted('VILLA_ADD_REVIEW', $villa);
+
+        $review = new VillaReview();
+        $form = $this->createForm(VillaReviewType::class, $review);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $review->setVilla($villa);
+            $review->setUser($this->getUser());
+            $review->setCreatedAt(new \DateTimeImmutable());
+
+            $entityManager->persist($review);
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Votre avis a été ajouté avec succès.');
+        } else {
+            $this->addFlash('error', 'Il y a eu une erreur lors de l\'ajout de votre avis.');
+        }
+
+        return $this->redirectToRoute('app_villa_show', ['id' => $villa->getId()], Response::HTTP_SEE_OTHER);
     }
 }
