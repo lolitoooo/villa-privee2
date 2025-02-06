@@ -21,6 +21,17 @@ class VillaRepository extends ServiceEntityRepository
         parent::__construct($registry, Villa::class);
     }
 
+    public function getVillasByLocation(): array
+    {
+        return $this->createQueryBuilder('v')
+            ->select('v.location, COUNT(v.id) as count')
+            ->where('v.isActive = :active')
+            ->setParameter('active', true)
+            ->groupBy('v.location')
+            ->getQuery()
+            ->getResult();
+    }
+
     public function save(Villa $villa): void
     {
         $this->getEntityManager()->persist($villa);

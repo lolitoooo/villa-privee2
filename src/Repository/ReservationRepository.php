@@ -14,6 +14,46 @@ class ReservationRepository extends ServiceEntityRepository
         parent::__construct($registry, Reservation::class);
     }
 
+    public function getTotalRevenue(): float
+    {
+        $result = $this->createQueryBuilder('r')
+            ->select('SUM(r.totalPrice) as total')
+            ->where('r.status != :canceledStatus')
+            ->setParameter('canceledStatus', 'canceled')
+            ->getQuery()
+            ->getSingleResult();
+
+        return $result['total'] ?? 0;
+    }
+
+    public function getMonthlyRevenue(): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+        $sql = "SELECT TO_CHAR(created_at, 'YYYY-MM') as month,
+                      SUM(total_price) as revenue
+               FROM reservation
+               WHERE status != :canceledStatus
+               AND created_at >= :yearAgo
+               GROUP BY month
+               ORDER BY month ASC";
+
+        $stmt = $conn->prepare($sql);
+        $result = $stmt->executeQuery([
+            'canceledStatus' => 'canceled',
+            'yearAgo' => (new \DateTime('-1 year'))->format('Y-m-d')
+        ]);
+
+        $monthlyData = [];
+        foreach ($result->fetchAllAssociative() as $row) {
+            $monthlyData[] = [
+                'month' => $row['month'],
+                'revenue' => (float)$row['revenue']
+            ];
+        }
+
+        return $monthlyData;
+    }
+
     public function findOverlappingReservations(Villa $villa, \DateTime $startDate, \DateTime $endDate): array
     {
         return $this->createQueryBuilder('r')
