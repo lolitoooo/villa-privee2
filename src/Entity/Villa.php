@@ -50,11 +50,11 @@ class Villa
     #[ORM\Column]
     private ?int $bathrooms = null;
 
-    #[ORM\Column]
-    private ?int $capacity = null;
-
     #[ORM\Column(length: 255, unique: true)]
     private ?string $slug = null;
+
+    #[ORM\Column]
+    private ?int $capacity = null;
 
     #[ORM\OneToMany(mappedBy: 'villa', targetEntity: VillaReview::class, orphanRemoval: true)]
     private Collection $reviews;

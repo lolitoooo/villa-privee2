@@ -5,10 +5,22 @@
 {% block body %}
     <div class="container mt-5">
         <div class="row">
+<<<<<<< HEAD
             <div class="col-md-8 mx-auto text-center">
                 <h1 class="display-4">Une erreur est survenue</h1>
                 <p class="lead">Nous sommes désolés, mais une erreur s'est produite lors du traitement de votre demande.</p>
                 <a href="{{ path('app_home') }}" class="btn btn-primary">Retourner à l'accueil</a>
+=======
+            <div class="col-md-8 offset-md-2 text-center">
+                <div class="alert alert-danger">
+                    <h1 class="display-4">Une erreur est survenue</h1>
+                    <p class="lead">{{ exception.message|default('Une erreur inattendue s\'est produite.') }}</p>
+                    <hr>
+                    <p>
+                        <a href="{{ path('app_home') }}" class="btn btn-primary">Retour à l'accueil</a>
+                    </p>
+                </div>
+>>>>>>> e81e9cf27c2d233e1899ab1471340a83078d3e2d
             </div>
         </div>
     </div>

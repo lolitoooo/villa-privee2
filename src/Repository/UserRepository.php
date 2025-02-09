@@ -16,6 +16,32 @@ class UserRepository extends ServiceEntityRepository
         parent::__construct($registry, User::class);
     }
 
+    public function getMonthlyRegistrations(): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+        $sql = "SELECT TO_CHAR(create_at, 'YYYY-MM') as month,
+                      COUNT(id) as count
+               FROM \"user\"
+               WHERE create_at >= :yearAgo
+               GROUP BY month
+               ORDER BY month ASC";
+
+        $stmt = $conn->prepare($sql);
+        $result = $stmt->executeQuery([
+            'yearAgo' => (new \DateTime('-1 year'))->format('Y-m-d')
+        ]);
+
+        $monthlyData = [];
+        foreach ($result->fetchAllAssociative() as $row) {
+            $monthlyData[] = [
+                'month' => $row['month'],
+                'count' => (int)$row['count']
+            ];
+        }
+
+        return $monthlyData;
+    }
+
 //    /**
 //     * @return User[] Returns an array of User objects
 //     */

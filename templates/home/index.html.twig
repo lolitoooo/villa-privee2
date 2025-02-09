@@ -33,7 +33,7 @@
                 <div class="card-body">
                     <h5 class="card-title">Mes Réservations</h5>
                     <p class="card-text">Consultez et gérez vos réservations actuelles.</p>
-                    <a href="#" class="btn btn-primary{% if app.user.isBanned %} disabled{% endif %}">
+                    <a href="{{ path('app_account_reservations') }}" class="btn btn-primary{% if app.user.isBanned %} disabled{% endif %}">
                         {% if app.user.isBanned %}
                             <i class="bi bi-lock me-2"></i>
                         {% endif %}
@@ -47,7 +47,7 @@
                 <div class="card-body">
                     <h5 class="card-title">Rechercher une Villa</h5>
                     <p class="card-text">Trouvez la villa parfaite pour votre prochain séjour.</p>
-                    <a href="#" class="btn btn-primary{% if app.user.isBanned %} disabled{% endif %}">
+                    <a href="{{ path('app_villa_index') }}" class="btn btn-primary{% if app.user.isBanned %} disabled{% endif %}">
                         {% if app.user.isBanned %}
                             <i class="bi bi-lock me-2"></i>
                         {% endif %}

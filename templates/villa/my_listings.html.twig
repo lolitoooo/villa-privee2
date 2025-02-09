@@ -86,6 +86,17 @@
                                             <i class="bi bi-{{ villa.isActive ? 'pause' : 'play' }}"></i>
                                         </button>
                                     </form>
+                                    <form action="{{ path('app_villa_delete', {'id': villa.id}) }}" 
+                                          method="post" 
+                                          style="display: inline-block;"
+                                          onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette villa ?');">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ villa.id) }}">
+                                        <button type="submit" 
+                                                class="btn btn-sm btn-outline-danger"
+                                                title="Supprimer">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>
