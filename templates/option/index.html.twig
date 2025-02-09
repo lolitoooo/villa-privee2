@@ -1,0 +1,44 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des Options{% endblock %}
+
+{% block body %}
+    <div class="container mt-4">
+        <h1>Gestion des Options</h1>
+
+        <a href="{{ path('app_option_new') }}" class="btn btn-primary mb-3">Ajouter une nouvelle option</a>
+
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Nom</th>
+                        <th>Prix</th>
+                        <th>Description</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for option in options %}
+                    <tr>
+                        <td>{{ option.name }}</td>
+                        <td>{{ option.price|number_format(2, ',', ' ') }} €</td>
+                        <td>{{ option.description }}</td>
+                        <td>
+                            <a href="{{ path('app_option_edit', {'id': option.id}) }}" class="btn btn-sm btn-warning">Modifier</a>
+                            <form method="post" action="{{ path('app_option_delete', {'id': option.id}) }}" style="display: inline-block" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette option ?');">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ option.id) }}">
+                                <button class="btn btn-sm btn-danger">Supprimer</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="4">Aucune option trouvée</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Villa;
 use App\Entity\VillaImage;
 use App\Entity\VillaReview;
+use App\Entity\Option;
 use App\Form\VillaType;
 use App\Form\VillaReviewType;
 use App\Repository\VillaRepository;
@@ -56,7 +57,9 @@ class VillaController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $villa->setOwner($this->getUser());
             
-            // Gérer les images
+            $slug = $slugger->slug($villa->getTitle())->lower();
+            $villa->setSlug($slug);
+            
             $images = $form->get('imageFiles')->getData();
             if ($images) {
                 foreach ($images as $image) {
@@ -94,7 +97,6 @@ class VillaController extends AbstractController
     #[Route('/{id}', name: 'app_villa_show', methods: ['GET'])]
     public function show(Villa $villa, ParameterBagInterface $params): Response
     {
-        // Ne pas afficher les villas désactivées sauf pour le propriétaire
         if (!$villa->isIsActive() && $this->getUser() !== $villa->getOwner()) {
             throw $this->createNotFoundException('Cette villa n\'est pas disponible.');
         }
@@ -112,7 +114,6 @@ class VillaController extends AbstractController
     #[Route('/{id}/modifier', name: 'app_villa_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, Villa $villa, EntityManagerInterface $entityManager, SluggerInterface $slugger): Response
     {
-        // Vérifier que l'utilisateur est le propriétaire
         if ($this->getUser() !== $villa->getOwner()) {
             throw $this->createAccessDeniedException('Vous n\'êtes pas autorisé à modifier cette villa.');
         }
@@ -121,7 +122,9 @@ class VillaController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // Gérer les nouvelles images
+            $slug = $slugger->slug($villa->getTitle())->lower();
+            $villa->setSlug($slug);
+            
             $images = $form->get('imageFiles')->getData();
             if ($images) {
                 foreach ($images as $image) {
@@ -182,7 +185,6 @@ class VillaController extends AbstractController
             $image = $entityManager->getRepository(VillaImage::class)->find($imageId);
             
             if ($image && $image->getVilla() === $villa) {
-                // Supprimer le fichier physique
                 $imagePath = $this->getParameter('villa_images_directory').'/'.$image->getFilename();
                 if (file_exists($imagePath)) {
                     unlink($imagePath);
